@@ -226,18 +226,35 @@ class Keithley2182(Instrument, KeithleyBuffer):
         in seconds, which can take values from 1 to 9,999,999.999 s. """
     )
 
+    ##########
+    # Offset #
+    ##########
+
+    rel = Instrument.control(
+        ":OUTPUT:RELATIVE?", ":OUTPUT:RELATIVE %s",
+        """ Turns on or off relative output, with the analog output at
+        the time the command is called being used as the offset value.""",
+        values = {'ON','OFF'}
+    )
+
+    # voltage_digitalfilter_status = Instrument.control(
+    #     ":SENSE:VOLT:CHAN1:DFIL:STAT?", ":SENSE:VOLT:CHAN1:DFIL:STAT %s",
+    #     """Turns ON and OFF the digital filter for channel 1. Note that changes made to the digital filter settings will 
+    #     immediatly come into effect if filter is on. If off changes will take effect when turned on.""",
+    #     values = {'ON','OFF'}
+    # )
     def __init__(self, adapter, **kwargs):
         super(Keithley2182, self).__init__(
             adapter, "Keithley 2182 Nanovoltmeter", **kwargs
         )
-        # Set up data transfer format
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.config(
-                is_binary=False,
-                datatype='float32',
-                converter='f',
-                separator=','
-            )
+        # Set up data transfer format (antiquated?)
+        # if isinstance(self.adapter, VISAAdapter):
+        #     self.adapter.config(
+        #         is_binary=False,
+        #         datatype='float32',
+        #         converter='f',
+        #         separator=','
+        #     )
 
     # TODO: Clean up error checking
     def check_errors(self):
@@ -250,7 +267,7 @@ class Keithley2182(Instrument, KeithleyBuffer):
             else:
                 break
 
-    def measure_voltage(self, max_voltage=1, ac=False):
+    def measure_voltage(self, max_voltage=1, ac=False, rel = False):
         """ Configures the instrument to measure voltage,
         based on a maximum voltage to set the range, and
         a boolean flag to determine if DC or AC is required.
@@ -264,6 +281,10 @@ class Keithley2182(Instrument, KeithleyBuffer):
         else:
             self.mode = 'voltage'
             self.voltage_range = max_voltage
+        if rel:
+            self.rel = 'ON'
+        else:
+            self.rel = 'OFF'
 
     def measure_current(self, max_current=10e-3, ac=False):
         """ Configures the instrument to measure current,

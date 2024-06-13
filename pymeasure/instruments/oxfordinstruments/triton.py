@@ -1,24 +1,35 @@
 import socket
+from time import sleep
 
 class Triton():
-    
+    edsPORT = 33576
+    edsIP = "localhost"
+    srvsock = None
     """ Allows user to control Magnet power and temperature controller via the Triton control software"""
     
-    def connect(self):
-        edsIP = "localhost"
-        edsPORT = 33576
+    def connect(self, edsIP = "localhost"):
+        self.edsIP = edsIP
         MESSAGE = b'SET:DEV:UID:VRM:MEAS:ENAB:\r\n'
         self.srvsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.srvsock.settimeout(20) # 3 second timeout on commands
-        self.srvsock.connect((edsIP, edsPORT))
+        self.srvsock.connect((self.edsIP, self.edsPORT))
         
+    def disconnect(self):
+        if(self.srvsock is not None):
+            self.srvsock.close()
 ## Magnet
 
 
     def get_Bfield(self): #This will get the magnetic field in xyz coordinates, will output float of z magnetic field#
         self.srvsock.sendall(b'READ:SYS:VRM:VECT\r\n')
         data = self.srvsock.recv(4096)
+        print(data)
         data = float(data[35:-3])
+        return (data)
+    
+    def get_setpoint(self):
+        self.srvsock.sendall(b'READ:SYS:VRM:VSET\r\n')
+        data = self.srvsock.recv(4096)
         return (data)
     
     def get_swprate(self): #This will get the sweep rate#
@@ -31,6 +42,17 @@ class Triton():
         data = self.srvsock.recv(4096)
         return (data)
     
+    def get_current_control(self):
+        self.srvsock.sendall(b'READ:SYS:VRM:CURR\r\n')
+        data = self.srvsock.recv(4096)
+        data = float(data[35:-3])
+        return (data)
+    
+    def get_status(self):
+        self.srvsock.sendall(b'READ:SYS:VRM:ACTN\r\n')
+        data = self.srvsock.recv(4096)
+        return (data)
+    
     def set_poc_on(self): #Turns persistent on completion on
         self.srvsock.sendall(b'SET:SYS:VRM:POC:ON\r\n')
         data = self.srvsock.recv(4096)
@@ -40,25 +62,47 @@ class Triton():
         data = self.srvsock.recv(4096)
         
     def set_swpto_asap(self,bf): #sets sweep rate to asap#
-        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET[0 0 %a]\r\n' % bf )
+        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET:[0 0 %a]\r\n' % bf )
         data = self.srvsock.recv(4096)
         
     def set_swprate_rate(self,rate,bf):
-        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:RATE:RATE:%a:VSET[0 0 %a]\r\n' % rate, bf )
+        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:RATE:RATE:%a:VSET:[0 0 %a]\r\n' % rate, bf )
         data = self.srvsock.recv(4096)
         
     def set_swprate_time(self,time,bf):
-        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:TIME:TIME:%a:VSET[0 0 %a]\r\n' % time, bf )
+        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:TIME:TIME:%a:VSET:[0 0 %a]\r\n' % time, bf )
         data = self.srvsock.recv(4096)
         
-    def set_bfield(self,bf):
-        self.srvsock.sendall(b'SET:SYS:VRM:VSET:[0 0 %a]\r\n' % bf)
-        data = self.srvsock.recv(4096)
+    # def set_bfield(self,bf): #non-functional use set_swpto_asap
+    #     self.srvsock.sendall(b'SET:SYS:VRM:VSET:[0 0 %a]\r\n' % bf)
+    #     data = self.srvsock.recv(4096)
         
     def goto_set(self):
         self.srvsock.sendall(b'SET:SYS:VRM:ACTN:RTOS\r\n')
         data = self.srvsock.recv(4096)
-        
+
+    def goto_bfield(self, bfield, wait=False, log=None):
+        if(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
+            if(log != None):
+                log.info('Waiting for magnet controller to be idle.')
+            while(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
+                sleep(1)
+            if(log != None):
+                log.info('Magnet controller is now idle.')
+
+        if(not self.isWithin(self.get_Bfield(), bfield, 0.001)):
+            if(log != None):
+                log.info("Starting B field sweep.")
+            self.set_swpto_asap(bfield)
+            self.goto_set() 
+            if(wait):
+                sleep(1)
+                while(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
+                    sleep(1)
+        else:
+            if(log != None):
+                log.info("B field already stable at correct value, proceeding.")
+
     def goto_zero(self):
         self.srvsock.sendall(b'SET:SYS:VRM:ACTN:RTOZ\r\n')
         data = self.srvsock.recv(4096)
@@ -70,7 +114,6 @@ class Triton():
     def set_persistent_off(self):
         self.srvsock.sendall(b'SET:SYS:ACTN:NPERS\r\n')
   
-
 ## Temperature control
 
     def get_temp_T8(self): #This will get the temperature reading from the RuO thermometer, for use below 1.2K#
@@ -84,7 +127,6 @@ class Triton():
         data = self.srvsock.recv(4096)
         data = float(data[26:-4])
         return (data)
-    
     
     def get_temp_T5(self): #This will get the temmperature reading from the Cernox thermometer, for use above 1.2K#
         self.srvsock.sendall(b'READ:DEV:T5:TEMP:SIG:TEMP\r\n')
@@ -196,3 +238,6 @@ class Triton():
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:ENAB:ON\r\n')
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RANGE:%a\r\n' % htr )
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:ON\r\n')
+
+    def isWithin(self, have, want, range):
+        return want - range <= have <= want + range
