@@ -81,8 +81,11 @@ class Triton():
         self.srvsock.sendall(b'SET:SYS:VRM:ACTN:RTOS\r\n')
         data = self.srvsock.recv(4096)
 
-    def goto_bfield(self, bfield, wait=False, log=None):
-        if(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
+    def is_idle(self):
+        return self.get_status() == b'STAT:SYS:VRM:ACTN:IDLE\n'
+
+    def goto_bfield(self, bfield, sweeprate = None, wait=False, log=None):
+        if(not self.is_idle()):
             if(log != None):
                 log.info('Waiting for magnet controller to be idle.')
             while(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
@@ -93,11 +96,14 @@ class Triton():
         if(not self.isWithin(self.get_Bfield(), bfield, 0.001)):
             if(log != None):
                 log.info("Starting B field sweep.")
-            self.set_swpto_asap(bfield)
+            if(sweeprate is None):
+                self.set_swpto_asap(bfield)
+            else:
+                self.set_swprate_rate(sweeprate, bfield)
             self.goto_set() 
             if(wait):
                 sleep(1)
-                while(self.get_status() != b'STAT:SYS:VRM:ACTN:IDLE\n'):
+                while(not self.is_idle()):
                     sleep(1)
         else:
             if(log != None):
