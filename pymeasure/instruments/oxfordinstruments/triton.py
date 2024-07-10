@@ -1,5 +1,4 @@
 import socket
-<<<<<<< HEAD
 
 class Triton():
     
@@ -13,7 +12,7 @@ class Triton():
         self.srvsock.settimeout(20) # 3 second timeout on commands
         self.srvsock.connect((edsIP, edsPORT))
         
-=======
+
 from time import sleep
 
 class Triton():
@@ -32,18 +31,17 @@ class Triton():
     def disconnect(self):
         if(self.srvsock is not None):
             self.srvsock.close()
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
 ## Magnet
 
 
     def get_Bfield(self): #This will get the magnetic field in xyz coordinates, will output float of z magnetic field#
         self.srvsock.sendall(b'READ:SYS:VRM:VECT\r\n')
         data = self.srvsock.recv(4096)
-<<<<<<< HEAD
+
         data = float(data[35:-3])
         return (data)
     
-=======
+
         print(data)
         data = float(data[35:-3])
         return (data)
@@ -53,7 +51,6 @@ class Triton():
         data = self.srvsock.recv(4096)
         return (data)
     
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
     def get_swprate(self): #This will get the sweep rate#
         self.srvsock.sendall(b'READ:SYS:VRM:RFST\r\n')
         data = self.srvsock.recv(4096)
@@ -64,8 +61,6 @@ class Triton():
         data = self.srvsock.recv(4096)
         return (data)
     
-<<<<<<< HEAD
-=======
     def get_current_control(self):
         self.srvsock.sendall(b'READ:SYS:VRM:CURR\r\n')
         data = self.srvsock.recv(4096)
@@ -77,7 +72,7 @@ class Triton():
         data = self.srvsock.recv(4096)
         return (data)
     
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
+
     def set_poc_on(self): #Turns persistent on completion on
         self.srvsock.sendall(b'SET:SYS:VRM:POC:ON\r\n')
         data = self.srvsock.recv(4096)
@@ -87,7 +82,7 @@ class Triton():
         data = self.srvsock.recv(4096)
         
     def set_swpto_asap(self,bf): #sets sweep rate to asap#
-<<<<<<< HEAD
+
         self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET[0 0 %a]\r\n' % bf )
         data = self.srvsock.recv(4096)
         
@@ -102,7 +97,7 @@ class Triton():
     def set_bfield(self,bf):
         self.srvsock.sendall(b'SET:SYS:VRM:VSET:[0 0 %a]\r\n' % bf)
         data = self.srvsock.recv(4096)
-=======
+
         self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET:[0 0 %a]\r\n' % bf )
         data = self.srvsock.recv(4096)
         
@@ -117,15 +112,11 @@ class Triton():
     # def set_bfield(self,bf): #non-functional use set_swpto_asap
     #     self.srvsock.sendall(b'SET:SYS:VRM:VSET:[0 0 %a]\r\n' % bf)
     #     data = self.srvsock.recv(4096)
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
         
     def goto_set(self):
         self.srvsock.sendall(b'SET:SYS:VRM:ACTN:RTOS\r\n')
         data = self.srvsock.recv(4096)
-<<<<<<< HEAD
         
-=======
-
     def is_idle(self):
         return self.get_status() == b'STAT:SYS:VRM:ACTN:IDLE\n'
 
@@ -154,7 +145,6 @@ class Triton():
             if(log != None):
                 log.info("B field already stable at correct value, proceeding.")
 
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
     def goto_zero(self):
         self.srvsock.sendall(b'SET:SYS:VRM:ACTN:RTOZ\r\n')
         data = self.srvsock.recv(4096)
@@ -166,10 +156,6 @@ class Triton():
     def set_persistent_off(self):
         self.srvsock.sendall(b'SET:SYS:ACTN:NPERS\r\n')
   
-<<<<<<< HEAD
-
-=======
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
 ## Temperature control
 
     def get_temp_T8(self): #This will get the temperature reading from the RuO thermometer, for use below 1.2K#
@@ -184,10 +170,6 @@ class Triton():
         data = float(data[26:-4])
         return (data)
     
-<<<<<<< HEAD
-    
-=======
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
     def get_temp_T5(self): #This will get the temmperature reading from the Cernox thermometer, for use above 1.2K#
         self.srvsock.sendall(b'READ:DEV:T5:TEMP:SIG:TEMP\r\n')
         data = self.srvsock.recv(4096)
@@ -298,9 +280,6 @@ class Triton():
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:ENAB:ON\r\n')
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RANGE:%a\r\n' % htr )
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:ON\r\n')
-<<<<<<< HEAD
-=======
 
     def isWithin(self, have, want, range):
         return want - range <= have <= want + range
->>>>>>> fac2b4bb9f1e7a2a168a52f89e2db10e4a755922
