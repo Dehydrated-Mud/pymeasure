@@ -121,7 +121,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
         voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
         """,
         validator=strict_range,
-        values=[-4.995, +4.995],
+        values=[-8.001, +8.001],
     )
 
     voltage_high = Instrument.control(
