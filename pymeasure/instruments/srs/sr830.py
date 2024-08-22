@@ -429,7 +429,7 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
-        expand = discreteTruncate(expand, self.EXPANSION_VALUES)
+        expand = self.EXPANSION_VALUES.index(discreteTruncate(expand, self.EXPANSION_VALUES))
         self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
 
     def output_conversion(self, channel):

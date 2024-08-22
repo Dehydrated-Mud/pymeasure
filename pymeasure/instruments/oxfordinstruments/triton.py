@@ -29,19 +29,17 @@ class Triton():
         self.srvsock.connect((self.edsIP, self.edsPORT))
         
     def disconnect(self):
+        self.set_poc_on() # set magnet to persistent mode so that the circuit becomes fully superconducting again and can cool down to 4.2-4.3 K instead of 4.6-4.7 K
         if(self.srvsock is not None):
             self.srvsock.close()
 ## Magnet
 
-
     def get_Bfield(self): #This will get the magnetic field in xyz coordinates, will output float of z magnetic field#
         self.srvsock.sendall(b'READ:SYS:VRM:VECT\r\n')
         data = self.srvsock.recv(4096)
-
         data = float(data[35:-3])
         return (data)
     
-
         print(data)
         data = float(data[35:-3])
         return (data)
@@ -82,22 +80,20 @@ class Triton():
         data = self.srvsock.recv(4096)
         
     def set_swpto_asap(self,bf): #sets sweep rate to asap#
-
         self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET[0 0 %a]\r\n' % bf )
         data = self.srvsock.recv(4096)
         
-    def set_swprate_rate(self,rate,bf):
-        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:RATE:RATE:%a:VSET[0 0 %a]\r\n' % rate, bf )
-        data = self.srvsock.recv(4096)
+    # def set_swprate_rate(self,rate,bf):
+    #     self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:RATE:RATE:%a:VSET[0 0 %a]\r\n' % rate, bf )
+    #     data = self.srvsock.recv(4096)
         
-    def set_swprate_time(self,time,bf):
-        self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:TIME:TIME:%a:VSET[0 0 %a]\r\n' % time, bf )
-        data = self.srvsock.recv(4096)
+    # def set_swprate_time(self,time,bf):
+    #     self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:TIME:TIME:%a:VSET[0 0 %a]\r\n' % time, bf )
+    #     data = self.srvsock.recv(4096)
         
     def set_bfield(self,bf):
         self.srvsock.sendall(b'SET:SYS:VRM:VSET:[0 0 %a]\r\n' % bf)
         data = self.srvsock.recv(4096)
-
         self.srvsock.sendall(b'SET:SYS:VRM:RVST:MODE:ASAP:VSET:[0 0 %a]\r\n' % bf )
         data = self.srvsock.recv(4096)
         
@@ -133,7 +129,7 @@ class Triton():
             if(log != None):
                 log.info("Starting B field sweep.")
             if(sweeprate is None):
-                self.set_swpto_asap(bfield)
+                self.set_bfield(bfield)
             else:
                 self.set_swprate_rate(sweeprate, bfield)
             self.goto_set() 
