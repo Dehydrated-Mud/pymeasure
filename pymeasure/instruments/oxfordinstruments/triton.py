@@ -160,6 +160,12 @@ class Triton():
         data = float(data[26:-2])
         return (data)
     
+    def get_temp_T13(self): #This will query the magnet temperature#
+        self.srvsock.sendall(b'READ:DEV:T13:TEMP:SIG:TEMP\r\n')
+        data = self.srvsock.recv(4096)
+        data = float(data[27:-2])
+        return (data)
+    
     def get_res_T8(self):
         self.srvsock.sendall(b'READ:DEV:T8:TEMP:SIG:RES\r\n')
         data = self.srvsock.recv(4096)
@@ -264,18 +270,29 @@ class Triton():
             temp1 = self.srvsock.recv(4096)
             temp1 = float(data[26:-2])
     
-    def to_base(self):
+    def goto_base(self):
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:ENAB:OFF\r\n')
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RANGE:0\r\n')
         self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:OFF\r\n')
         
-    def init_temp_swp(self,tempi,ramprate,htr):
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:OFF\r\n')
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:TSET:%a\r\n' % tempi )
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:RATE:%a\r\n' % ramprate )
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:ENAB:ON\r\n')
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RANGE:%a\r\n' % htr )
-        self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:ON\r\n')
+    def goto_temp(self,tempi,ramprate,htr):
+        self.set_PID_off()
+        sleep(0.5)
+        self.set_temp(tempi)
+        sleep(0.5)
+        self.set_ramprate(ramprate)
+        sleep(0.5)
+        self.set_ramp_on()
+        sleep(0.5)
+        self.set_heater_range(htr)
+        sleep(0.5)
+        self.set_PID_on()
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:OFF\r\n')
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:TSET:%a\r\n' % tempi )
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:RATE:%a\r\n' % ramprate )
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RAMP:ENAB:ON\r\n')
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:RANGE:%a\r\n' % htr )
+        # self.srvsock.sendall(b'SET:DEV:T8:TEMP:LOOP:MODE:ON\r\n')
 
     def isWithin(self, have, want, range):
         return want - range <= have <= want + range
